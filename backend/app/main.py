@@ -1,28 +1,38 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
 from app.database.session import get_db
+from app.modules.auth.protected_router import router as protected_router
+from app.modules.auth.router import router as auth_router
 
 app = FastAPI(
     title=settings.APP_NAME,
     version="1.0.0"
 )
 
-@app.get("/")
+# Include API v1 Routers
+app.include_router(auth_router, prefix="/api/v1")
+app.include_router(protected_router, prefix="/api/v1")
+
+
+@app.get("/", summary="API Root")
 async def home():
     return {
         "message": "Welcome to DevHire API",
         "status": "running"
     }
 
-@app.get("/health")
+
+@app.get("/health", summary="Liveness Probe")
 async def health():
     return {
         "status": "healthy"
     }
 
-@app.get("/ready")
+
+@app.get("/ready", summary="Readiness Probe")
 async def readiness_check(db: AsyncSession = Depends(get_db)):
     try:
         await db.execute(text("SELECT 1"))
