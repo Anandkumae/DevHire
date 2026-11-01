@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from decimal import Decimal
 from app.models.user import User
 from app.models.company import Company
@@ -6,6 +7,7 @@ from app.models.job import Job
 from app.models.skill import Skill
 from app.models.application import Application, ApplicationStatusHistory
 from app.models.resume import Resume
+from app.models.interview import Interview, InterviewFeedback
 
 
 def test_user_model_initialization():
@@ -136,3 +138,46 @@ def test_resume_model_initialization():
     assert resume.content_type == "application/pdf"
     assert resume.is_primary is True
     assert repr(resume) == f"<Resume candidate_id={candidate_id} file_name=anand_kumar_resume.pdf primary=True>"
+
+
+def test_interview_models_initialization():
+    interview_id = uuid.uuid4()
+    app_id = uuid.uuid4()
+    interviewer_id = uuid.uuid4()
+    scheduled_time = datetime.now()
+
+    interview = Interview(
+        id=interview_id,
+        application_id=app_id,
+        round_name="Technical Round 1",
+        interview_type="video",
+        scheduled_at=scheduled_time,
+        duration_minutes=60,
+        meeting_link="https://meet.google.com/abc-defg-hij",
+        interviewer_id=interviewer_id,
+        status="scheduled"
+    )
+
+    assert interview.id == interview_id
+    assert interview.application_id == app_id
+    assert interview.round_name == "Technical Round 1"
+    assert interview.duration_minutes == 60
+    assert repr(interview) == f"<Interview id={interview_id} round=Technical Round 1 status=scheduled>"
+
+    feedback_id = uuid.uuid4()
+    feedback = InterviewFeedback(
+        id=feedback_id,
+        interview_id=interview_id,
+        interviewer_id=interviewer_id,
+        rating=5,
+        technical_skills="Superb understanding of async Python and PostgreSQL indexing.",
+        soft_skills="Clear communicator and team-oriented.",
+        overall_feedback="Strong recommendation for hire.",
+        recommendation="strong_hire"
+    )
+
+    assert feedback.id == feedback_id
+    assert feedback.interview_id == interview_id
+    assert feedback.rating == 5
+    assert feedback.recommendation == "strong_hire"
+    assert repr(feedback) == f"<InterviewFeedback interview_id={interview_id} rating=5 recommendation=strong_hire>"

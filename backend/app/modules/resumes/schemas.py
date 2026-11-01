@@ -29,3 +29,4 @@ class PresignedUploadResponse(BaseModel):
     method: str
     headers: dict[str, str]
     expires_in: int
+

@@ -74,3 +74,4 @@ class Resume(Base):
 
     def __repr__(self) -> str:
         return f"<Resume candidate_id={self.candidate_id} file_name={self.file_name} primary={self.is_primary}>"
+

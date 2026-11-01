@@ -304,3 +304,4 @@ async def set_primary_resume(
         download_url=download_url,
         created_at=resume.created_at
     )
+

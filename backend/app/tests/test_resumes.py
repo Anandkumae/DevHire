@@ -176,3 +176,4 @@ async def test_resume_management_lifecycle():
         # Verify resume 2 was promoted to primary
         res2_promoted = await ac.get(f"/api/v1/resumes/{resume_2_id}", headers=cand1_h)
         assert res2_promoted.json()["is_primary"] is True
+

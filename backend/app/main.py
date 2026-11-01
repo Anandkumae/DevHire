@@ -10,6 +10,7 @@ from app.modules.companies.router import router as companies_router
 from app.modules.jobs.router import router as jobs_router
 from app.modules.applications.router import router as applications_router
 from app.modules.resumes.router import router as resumes_router
+from app.modules.interviews.router import router as interviews_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -23,6 +24,7 @@ app.include_router(companies_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
 app.include_router(applications_router, prefix="/api/v1")
 app.include_router(resumes_router, prefix="/api/v1")
+app.include_router(interviews_router, prefix="/api/v1")
 
 
 @app.get("/", summary="API Root")
