@@ -31,3 +31,4 @@ def process_uploaded_resume_task(
         "task_id": self.request.id
     }
     return result
+

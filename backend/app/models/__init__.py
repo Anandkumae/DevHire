@@ -6,6 +6,7 @@ from app.models.skill import Skill
 from app.models.application import Application, ApplicationStatusHistory
 from app.models.resume import Resume
 from app.models.interview import Interview, InterviewFeedback
+from app.models.notification import Notification
 
 __all__ = [
     "User",
@@ -19,4 +20,5 @@ __all__ = [
     "Resume",
     "Interview",
     "InterviewFeedback",
+    "Notification",
 ]

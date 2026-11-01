@@ -101,6 +101,21 @@ async def apply_to_job(
     except Exception:
         pass
 
+    # Trigger real-time notification to recruiter
+    try:
+        if job.company and job.company.recruiter_id:
+            from app.modules.notifications.service import create_and_send_notification
+            await create_and_send_notification(
+                db=db,
+                user_id=job.company.recruiter_id,
+                type="application_received",
+                title="New Job Application Received",
+                message=f"{current_user.full_name} applied for {job.title}.",
+                data={"application_id": str(application.id), "job_id": str(job.id)}
+            )
+    except Exception:
+        pass
+
     return application
 
 
@@ -282,6 +297,21 @@ async def update_application_status(
                 new_status=data.status,
                 notes=data.notes
             )
+    except Exception:
+        pass
+
+    # Trigger real-time notification to candidate
+    try:
+        from app.modules.notifications.service import create_and_send_notification
+        formatted_status = data.status.replace("_", " ").title()
+        await create_and_send_notification(
+            db=db,
+            user_id=app.candidate_id,
+            type="status_updated",
+            title=f"Application {formatted_status}",
+            message=f"Your application for {app.job.title} has been moved to: {formatted_status}.",
+            data={"application_id": str(app.id), "status": data.status}
+        )
     except Exception:
         pass
 

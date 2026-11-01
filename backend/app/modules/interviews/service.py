@@ -113,6 +113,20 @@ async def schedule_interview(
     except Exception:
         pass
 
+    # Trigger real-time notification to candidate
+    try:
+        from app.modules.notifications.service import create_and_send_notification
+        await create_and_send_notification(
+            db=db,
+            user_id=app.candidate_id,
+            type="interview_scheduled",
+            title=f"Interview Scheduled: {interview.round_name}",
+            message=f"Your interview for {interview.round_name} has been scheduled for {interview.scheduled_at.strftime('%Y-%m-%d %H:%M UTC')}.",
+            data={"interview_id": str(interview.id), "application_id": str(app.id)}
+        )
+    except Exception:
+        pass
+
     return interview
 
 

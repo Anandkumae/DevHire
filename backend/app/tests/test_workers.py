@@ -86,3 +86,4 @@ def test_process_uploaded_resume_task():
     assert result["resume_id"] == resume_id
     assert result["file_name"] == "arjun_resume.pdf"
     assert result["status"] == "processed"
+

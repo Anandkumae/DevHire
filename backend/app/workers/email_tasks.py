@@ -98,3 +98,4 @@ def send_interview_invitation_email(
     body += "\nPlease make sure you are in a quiet environment with a working microphone and camera.\n\nBest of luck,\nDevHire Recruiting"
 
     return send_raw_email_task(candidate_email, subject, body)
+

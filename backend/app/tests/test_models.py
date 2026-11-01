@@ -8,6 +8,7 @@ from app.models.skill import Skill
 from app.models.application import Application, ApplicationStatusHistory
 from app.models.resume import Resume
 from app.models.interview import Interview, InterviewFeedback
+from app.models.notification import Notification
 
 
 def test_user_model_initialization():
@@ -181,3 +182,23 @@ def test_interview_models_initialization():
     assert feedback.rating == 5
     assert feedback.recommendation == "strong_hire"
     assert repr(feedback) == f"<InterviewFeedback interview_id={interview_id} rating=5 recommendation=strong_hire>"
+
+
+def test_notification_model_initialization():
+    notif_id = uuid.uuid4()
+    user_id = uuid.uuid4()
+
+    notif = Notification(
+        id=notif_id,
+        user_id=user_id,
+        type="application_received",
+        title="New Application Received",
+        message="A new candidate applied to your posted job.",
+        is_read=False
+    )
+
+    assert notif.id == notif_id
+    assert notif.user_id == user_id
+    assert notif.type == "application_received"
+    assert notif.is_read is False
+    assert repr(notif) == f"<Notification user_id={user_id} type=application_received is_read=False>"
