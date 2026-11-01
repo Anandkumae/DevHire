@@ -15,6 +15,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database.base import Base
 
 if TYPE_CHECKING:
+    from app.models.application_match import ApplicationMatchScore
     from app.models.job import Job
     from app.models.user import User
 
@@ -80,6 +81,12 @@ class Application(Base):
         back_populates="application",
         cascade="all, delete-orphan",
         order_by="ApplicationStatusHistory.created_at.asc()",
+        lazy="selectin"
+    )
+    match_score: Mapped[Optional["ApplicationMatchScore"]] = relationship(
+        back_populates="application",
+        uselist=False,
+        cascade="all, delete-orphan",
         lazy="selectin"
     )
 

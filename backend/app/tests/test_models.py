@@ -9,6 +9,7 @@ from app.models.application import Application, ApplicationStatusHistory
 from app.models.resume import Resume
 from app.models.interview import Interview, InterviewFeedback
 from app.models.notification import Notification
+from app.models.application_match import ApplicationMatchScore
 
 
 def test_user_model_initialization():
@@ -202,3 +203,31 @@ def test_notification_model_initialization():
     assert notif.type == "application_received"
     assert notif.is_read is False
     assert repr(notif) == f"<Notification user_id={user_id} type=application_received is_read=False>"
+
+
+def test_application_match_model_initialization():
+    match_id = uuid.uuid4()
+    app_id = uuid.uuid4()
+
+    match = ApplicationMatchScore(
+        id=match_id,
+        application_id=app_id,
+        overall_score=88.5,
+        skills_score=90.0,
+        semantic_score=85.0,
+        experience_score=100.0,
+        matching_skills=["Python", "FastAPI", "PostgreSQL"],
+        missing_skills=["Docker"],
+        strengths=["Matched 3 core skills", "Senior level confirmed"],
+        gap_analysis=["Missing Docker"],
+        summary="Strong Match (88.5%)"
+    )
+
+    assert match.id == match_id
+    assert match.application_id == app_id
+    assert match.overall_score == 88.5
+    assert match.skills_score == 90.0
+    assert "Python" in match.matching_skills
+    assert "Docker" in match.missing_skills
+    assert repr(match) == f"<ApplicationMatchScore app_id={app_id} score=88.5%>"
+

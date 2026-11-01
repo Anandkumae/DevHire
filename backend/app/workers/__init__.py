@@ -5,7 +5,10 @@ from app.workers.email_tasks import (
     send_interview_invitation_email,
     send_raw_email_task,
 )
-from app.workers.resume_tasks import process_uploaded_resume_task
+from app.workers.resume_tasks import (
+    process_uploaded_resume_task,
+    calculate_application_match_task,
+)
 
 __all__ = [
     "celery_app",
@@ -14,4 +17,5 @@ __all__ = [
     "send_application_status_updated_email",
     "send_interview_invitation_email",
     "process_uploaded_resume_task",
+    "calculate_application_match_task",
 ]

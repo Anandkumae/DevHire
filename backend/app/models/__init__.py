@@ -7,6 +7,7 @@ from app.models.application import Application, ApplicationStatusHistory
 from app.models.resume import Resume
 from app.models.interview import Interview, InterviewFeedback
 from app.models.notification import Notification
+from app.models.application_match import ApplicationMatchScore
 
 __all__ = [
     "User",
@@ -21,4 +22,5 @@ __all__ = [
     "Interview",
     "InterviewFeedback",
     "Notification",
+    "ApplicationMatchScore",
 ]

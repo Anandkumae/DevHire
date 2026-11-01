@@ -116,6 +116,13 @@ async def apply_to_job(
     except Exception:
         pass
 
+    # Trigger background AI resume matching task
+    try:
+        from app.workers.resume_tasks import calculate_application_match_task
+        calculate_application_match_task.delay(str(application.id))
+    except Exception:
+        pass
+
     return application
 
 

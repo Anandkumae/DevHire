@@ -114,6 +114,20 @@ class StorageService:
             return True
         return False
 
+    def read_file_bytes(self, s3_key: str) -> Any:
+        """Read file bytes from S3 or local storage."""
+        if self.s3_client:
+            try:
+                response = self.s3_client.get_object(Bucket=self.bucket_name, Key=s3_key)
+                return response["Body"].read()
+            except ClientError:
+                return None
+
+        file_path = self.local_dir / s3_key.replace("/", os.sep)
+        if file_path.exists():
+            return file_path.read_bytes()
+        return None
+
 
 storage_service = StorageService()
 

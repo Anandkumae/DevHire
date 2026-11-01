@@ -18,6 +18,7 @@ def test_celery_task_registration():
     assert "app.workers.email_tasks.send_application_status_updated_email" in registered
     assert "app.workers.email_tasks.send_interview_invitation_email" in registered
     assert "app.workers.resume_tasks.process_uploaded_resume_task" in registered
+    assert "app.workers.resume_tasks.calculate_application_match_task" in registered
 
 
 def test_send_raw_email_task():
