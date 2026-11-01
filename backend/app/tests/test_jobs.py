@@ -214,3 +214,4 @@ async def test_jobs_full_lifecycle():
         del_res = await ac.delete(f"/api/v1/jobs/{job1_id}", headers=recruiter_1_h)
         assert del_res.status_code == 200
         assert del_res.json()["message"] == "Job deleted successfully"
+

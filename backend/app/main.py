@@ -8,6 +8,7 @@ from app.modules.auth.protected_router import router as protected_router
 from app.modules.auth.router import router as auth_router
 from app.modules.companies.router import router as companies_router
 from app.modules.jobs.router import router as jobs_router
+from app.modules.applications.router import router as applications_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -19,6 +20,7 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(protected_router, prefix="/api/v1")
 app.include_router(companies_router, prefix="/api/v1")
 app.include_router(jobs_router, prefix="/api/v1")
+app.include_router(applications_router, prefix="/api/v1")
 
 
 @app.get("/", summary="API Root")

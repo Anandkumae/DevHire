@@ -3,6 +3,7 @@ from app.models.refresh_token import RefreshToken
 from app.models.company import Company
 from app.models.job import Job, job_skills
 from app.models.skill import Skill
+from app.models.application import Application, ApplicationStatusHistory
 
 __all__ = [
     "User",
@@ -11,4 +12,6 @@ __all__ = [
     "Job",
     "Skill",
     "job_skills",
+    "Application",
+    "ApplicationStatusHistory",
 ]

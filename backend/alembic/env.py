@@ -13,7 +13,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.core.config import settings
 from app.database.base import Base
-from app.models import User, RefreshToken, Company, Job, Skill, job_skills  # Ensures all models are registered with Base.metadata
+from app.models import (
+    User,
+    RefreshToken,
+    Company,
+    Job,
+    Skill,
+    job_skills,
+    Application,
+    ApplicationStatusHistory
+)  # Ensures all models are registered with Base.metadata
 
 config = context.config
 

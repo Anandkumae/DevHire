@@ -4,6 +4,7 @@ from app.models.user import User
 from app.models.company import Company
 from app.models.job import Job
 from app.models.skill import Skill
+from app.models.application import Application, ApplicationStatusHistory
 
 
 def test_user_model_initialization():
@@ -75,3 +76,40 @@ def test_job_model_initialization():
     assert job.status == "published"
     assert job.salary_min == Decimal("1800000.00")
     assert repr(job) == f"<Job Senior Backend Engineer company_id={company_id} status=published>"
+
+
+def test_application_models_initialization():
+    app_id = uuid.uuid4()
+    candidate_id = uuid.uuid4()
+    job_id = uuid.uuid4()
+
+    application = Application(
+        id=app_id,
+        candidate_id=candidate_id,
+        job_id=job_id,
+        cover_letter="Passionate backend engineer with 2 years of experience.",
+        resume_url="https://s3.amazonaws.com/devhire-resumes/test_resume.pdf",
+        status="applied"
+    )
+
+    assert application.id == app_id
+    assert application.candidate_id == candidate_id
+    assert application.job_id == job_id
+    assert application.status == "applied"
+    assert repr(application) == f"<Application candidate_id={candidate_id} job_id={job_id} status=applied>"
+
+    history_id = uuid.uuid4()
+    history = ApplicationStatusHistory(
+        id=history_id,
+        application_id=app_id,
+        from_status="applied",
+        to_status="under_review",
+        changed_by_user_id=candidate_id,
+        notes="Candidate moved to under review by recruiter."
+    )
+
+    assert history.id == history_id
+    assert history.application_id == app_id
+    assert history.from_status == "applied"
+    assert history.to_status == "under_review"
+    assert repr(history) == f"<ApplicationStatusHistory app_id={app_id} applied->under_review>"
