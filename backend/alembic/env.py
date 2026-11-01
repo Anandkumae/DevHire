@@ -21,7 +21,8 @@ from app.models import (
     Skill,
     job_skills,
     Application,
-    ApplicationStatusHistory
+    ApplicationStatusHistory,
+    Resume
 )  # Ensures all models are registered with Base.metadata
 
 config = context.config

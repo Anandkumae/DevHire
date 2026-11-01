@@ -104,3 +104,4 @@ async def change_application_status(
     current_user: User = Depends(require_roles("recruiter", "admin"))
 ):
     return await update_application_status(db, application_id, data, current_user)
+

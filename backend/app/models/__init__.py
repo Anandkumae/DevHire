@@ -4,6 +4,7 @@ from app.models.company import Company
 from app.models.job import Job, job_skills
 from app.models.skill import Skill
 from app.models.application import Application, ApplicationStatusHistory
+from app.models.resume import Resume
 
 __all__ = [
     "User",
@@ -14,4 +15,5 @@ __all__ = [
     "job_skills",
     "Application",
     "ApplicationStatusHistory",
+    "Resume",
 ]

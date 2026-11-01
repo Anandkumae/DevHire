@@ -4,7 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
-from app.models import Application, ApplicationStatusHistory, Company, Job, User
+from app.core.storage import storage_service
+from app.models import Application, ApplicationStatusHistory, Company, Job, Resume, User
 from app.modules.applications.schemas import ApplicationCreate, ApplicationStatusUpdate
 
 VALID_STATUS_TRANSITIONS = {
@@ -49,12 +50,24 @@ async def apply_to_job(
             detail="You have already applied for this job"
         )
 
-    # 3. Create application and initial audit log atomically
+    # 3. Resolve resume_url (fallback to candidate's primary uploaded resume if not provided)
+    effective_resume_url = data.resume_url
+    if not effective_resume_url:
+        resume_stmt = (
+            select(Resume)
+            .where(Resume.candidate_id == current_user.id, Resume.is_primary.is_(True))
+            .limit(1)
+        )
+        resume_obj = (await db.execute(resume_stmt)).scalar_one_or_none()
+        if resume_obj:
+            effective_resume_url = storage_service.generate_presigned_download_url(resume_obj.s3_key)
+
+    # 4. Create application and initial audit log atomically
     application = Application(
         candidate_id=current_user.id,
         job_id=data.job_id,
         cover_letter=data.cover_letter,
-        resume_url=data.resume_url,
+        resume_url=effective_resume_url,
         status="applied"
     )
     db.add(application)
@@ -240,3 +253,4 @@ async def update_application_status(
     await db.commit()
     await db.refresh(app)
     return app
+

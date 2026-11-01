@@ -131,3 +131,4 @@ class ApplicationStatusHistory(Base):
 
     def __repr__(self) -> str:
         return f"<ApplicationStatusHistory app_id={self.application_id} {self.from_status}->{self.to_status}>"
+

@@ -5,6 +5,7 @@ from app.models.company import Company
 from app.models.job import Job
 from app.models.skill import Skill
 from app.models.application import Application, ApplicationStatusHistory
+from app.models.resume import Resume
 
 
 def test_user_model_initialization():
@@ -113,3 +114,25 @@ def test_application_models_initialization():
     assert history.from_status == "applied"
     assert history.to_status == "under_review"
     assert repr(history) == f"<ApplicationStatusHistory app_id={app_id} applied->under_review>"
+
+
+def test_resume_model_initialization():
+    resume_id = uuid.uuid4()
+    candidate_id = uuid.uuid4()
+    resume = Resume(
+        id=resume_id,
+        candidate_id=candidate_id,
+        file_name="anand_kumar_resume.pdf",
+        s3_key="resumes/cand_123/anand_kumar_resume.pdf",
+        file_size_bytes=1048576,
+        content_type="application/pdf",
+        is_primary=True
+    )
+
+    assert resume.id == resume_id
+    assert resume.candidate_id == candidate_id
+    assert resume.file_name == "anand_kumar_resume.pdf"
+    assert resume.file_size_bytes == 1048576
+    assert resume.content_type == "application/pdf"
+    assert resume.is_primary is True
+    assert repr(resume) == f"<Resume candidate_id={candidate_id} file_name=anand_kumar_resume.pdf primary=True>"

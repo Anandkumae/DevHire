@@ -232,3 +232,4 @@ async def test_applications_full_lifecycle():
         assert history_list[3]["to_status"] == "interview"
         assert history_list[4]["to_status"] == "selected"
         assert history_list[4]["notes"] == "Offer extended to candidate"
+

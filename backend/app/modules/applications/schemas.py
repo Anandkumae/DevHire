@@ -68,3 +68,4 @@ class ApplicationResponse(BaseModel):
     status_history: list[StatusHistoryResponse] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
+
