@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     ALGORITHM: str = "HS256"
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000", "https://devhire.app"]
+    ENVIRONMENT: str = "development"
+    SENTRY_DSN: str | None = None
 
     # AWS S3 Storage
     AWS_ACCESS_KEY_ID: str | None = None

@@ -1,9 +1,32 @@
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+import sentry_sdk
 
 from app.core.config import settings
 from app.database.session import get_db
+
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        environment=settings.ENVIRONMENT,
+        traces_sample_rate=0.2,
+    )
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    version="1.0.0"
+)
+
+# CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 from app.modules.auth.protected_router import router as protected_router
 from app.modules.auth.router import router as auth_router
 from app.modules.companies.router import router as companies_router

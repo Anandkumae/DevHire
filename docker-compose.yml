@@ -1,0 +1,91 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: devhire-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: devhire_user
+      POSTGRES_PASSWORD: devhire_local_password
+      POSTGRES_DB: devhire_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devhire_user -d devhire_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: devhire-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: devhire-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      APP_NAME: "DevHire"
+      DEBUG: "true"
+      DATABASE_URL: "postgresql+asyncpg://devhire_user:devhire_local_password@db:5432/devhire_db"
+      REDIS_URL: "redis://redis:6379/0"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/1"
+      SECRET_KEY: "devhire_docker_secret_key_change_in_prod"
+      ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+      REFRESH_TOKEN_EXPIRE_DAYS: "7"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: devhire-celery-worker
+    restart: unless-stopped
+    command: celery -A app.workers.celery_app worker --loglevel=info -c 4
+    environment:
+      APP_NAME: "DevHire"
+      DEBUG: "true"
+      DATABASE_URL: "postgresql+asyncpg://devhire_user:devhire_local_password@db:5432/devhire_db"
+      REDIS_URL: "redis://redis:6379/0"
+      CELERY_BROKER_URL: "redis://redis:6379/0"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/1"
+      SECRET_KEY: "devhire_docker_secret_key_change_in_prod"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  redis_data:
+

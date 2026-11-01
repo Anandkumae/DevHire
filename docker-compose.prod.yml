@@ -1,0 +1,75 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: devhire-api:latest
+    restart: always
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --proxy-headers --forwarded-allow-ips="*"
+    ports:
+      - "8000:8000"
+    environment:
+      APP_NAME: "DevHire ATS"
+      DEBUG: "false"
+      ENVIRONMENT: "production"
+      DATABASE_URL: "${DATABASE_URL}"
+      REDIS_URL: "${REDIS_URL}"
+      CELERY_BROKER_URL: "${CELERY_BROKER_URL}"
+      CELERY_RESULT_BACKEND: "${CELERY_RESULT_BACKEND}"
+      SECRET_KEY: "${SECRET_KEY}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      AWS_REGION: "${AWS_REGION:-ap-south-1}"
+      S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
+      SENTRY_DSN: "${SENTRY_DSN}"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: devhire-worker:latest
+    restart: always
+    command: celery -A app.workers.celery_app worker --loglevel=info -c 4 -E
+    environment:
+      APP_NAME: "DevHire ATS"
+      DEBUG: "false"
+      ENVIRONMENT: "production"
+      DATABASE_URL: "${DATABASE_URL}"
+      REDIS_URL: "${REDIS_URL}"
+      CELERY_BROKER_URL: "${CELERY_BROKER_URL}"
+      CELERY_RESULT_BACKEND: "${CELERY_RESULT_BACKEND}"
+      SECRET_KEY: "${SECRET_KEY}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      AWS_REGION: "${AWS_REGION:-ap-south-1}"
+      S3_BUCKET_NAME: "${S3_BUCKET_NAME}"
+      SENTRY_DSN: "${SENTRY_DSN}"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+

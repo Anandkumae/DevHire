@@ -1,0 +1,97 @@
+name: DevHire CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Run Unit & Integration Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: devhire_user
+          POSTGRES_PASSWORD: devhire_local_password
+          POSTGRES_DB: devhire_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Run Database Migrations
+        working-directory: ./backend
+        env:
+          DATABASE_URL: "postgresql+asyncpg://devhire_user:devhire_local_password@localhost:5432/devhire_db"
+          REDIS_URL: "redis://localhost:6379/0"
+          CELERY_BROKER_URL: "redis://localhost:6379/0"
+          CELERY_RESULT_BACKEND: "redis://localhost:6379/1"
+        run: |
+          alembic upgrade head
+
+      - name: Run Pytest Suite
+        working-directory: ./backend
+        env:
+          DATABASE_URL: "postgresql+asyncpg://devhire_user:devhire_local_password@localhost:5432/devhire_db"
+          REDIS_URL: "redis://localhost:6379/0"
+          CELERY_BROKER_URL: "redis://localhost:6379/0"
+          CELERY_RESULT_BACKEND: "redis://localhost:6379/1"
+          SECRET_KEY: "ci_test_secret_key"
+        run: |
+          python -m pytest app/tests -v --durations=10
+
+  docker-build:
+    name: Build & Verify Docker Images
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: devhire-api:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
