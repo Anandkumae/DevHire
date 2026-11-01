@@ -95,7 +95,26 @@ async def schedule_interview(
     db.add(interview)
     await db.commit()
     await db.refresh(interview)
+
+    # Trigger background interview invitation email via Celery
+    try:
+        cand_stmt = select(User).where(User.id == app.candidate_id)
+        cand_res = await db.execute(cand_stmt)
+        candidate_user = cand_res.scalar_one_or_none()
+        if candidate_user:
+            from app.workers.email_tasks import send_interview_invitation_email
+            send_interview_invitation_email.delay(
+                candidate_email=candidate_user.email,
+                candidate_name=candidate_user.full_name,
+                round_name=interview.round_name,
+                scheduled_at_str=interview.scheduled_at.strftime("%Y-%m-%d %H:%M UTC"),
+                meeting_link=interview.meeting_link
+            )
+    except Exception:
+        pass
+
     return interview
+
 
 
 async def reschedule_interview(
@@ -291,4 +310,5 @@ async def get_interview_by_id(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interview not found")
 
     return interview
+
 

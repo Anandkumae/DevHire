@@ -76,6 +76,18 @@ async def upload_resume(
     await db.commit()
     await db.refresh(resume)
 
+    # Trigger background resume indexing task via Celery
+    try:
+        from app.workers.resume_tasks import process_uploaded_resume_task
+        process_uploaded_resume_task.delay(
+            resume_id=str(resume.id),
+            candidate_id=str(current_user.id),
+            file_name=clean_name,
+            file_size_bytes=len(file_bytes)
+        )
+    except Exception:
+        pass
+
     download_url = storage_service.generate_presigned_download_url(resume.s3_key)
 
     return ResumeResponse(

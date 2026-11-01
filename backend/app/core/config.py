@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     DATABASE_URL: str = "postgresql+asyncpg://devhire_user:devhire_local_password@localhost:5432/devhire_db"
     REDIS_URL: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"
+    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
+    CELERY_TASK_ALWAYS_EAGER: bool = False
 
     # Authentication & Security
     SECRET_KEY: str = "insecure_dev_secret_key_change_me"

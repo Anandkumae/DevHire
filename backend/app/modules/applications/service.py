@@ -24,7 +24,11 @@ async def apply_to_job(
     current_user: User
 ) -> Application:
     # 1. Job must exist and be published
-    job_stmt = select(Job).where(Job.id == data.job_id)
+    job_stmt = (
+        select(Job)
+        .options(joinedload(Job.company))
+        .where(Job.id == data.job_id)
+    )
     job_res = await db.execute(job_stmt)
     job = job_res.scalar_one_or_none()
     if not job:
@@ -83,6 +87,20 @@ async def apply_to_job(
     db.add(history)
     await db.commit()
     await db.refresh(application)
+
+    # Trigger background email task via Celery
+    try:
+        from app.workers.email_tasks import send_application_submitted_email
+        company_name = job.company.name if job.company else "DevHire Employer"
+        send_application_submitted_email.delay(
+            candidate_email=current_user.email,
+            candidate_name=current_user.full_name,
+            job_title=job.title,
+            company_name=company_name
+        )
+    except Exception:
+        pass
+
     return application
 
 
@@ -252,5 +270,20 @@ async def update_application_status(
     db.add(history)
     await db.commit()
     await db.refresh(app)
+
+    # Trigger background status notification task via Celery
+    try:
+        from app.workers.email_tasks import send_application_status_updated_email
+        if app.candidate and app.job:
+            send_application_status_updated_email.delay(
+                candidate_email=app.candidate.email,
+                candidate_name=app.candidate.full_name,
+                job_title=app.job.title,
+                new_status=data.status,
+                notes=data.notes
+            )
+    except Exception:
+        pass
+
     return app
 
