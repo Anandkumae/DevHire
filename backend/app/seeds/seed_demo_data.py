@@ -1,5 +1,6 @@
 import asyncio
 import uuid
+import json
 from decimal import Decimal
 from pwdlib import PasswordHash
 from sqlalchemy import select
@@ -50,7 +51,7 @@ async def seed_data():
 
         # 2. Create Company
         recruiter = users["recruiter@techcorp.com"]
-        comp_existing = (await db.execute(select(Company).where(Company.recruiter_id == recruiter.id))).scalar_one_or_none()
+        comp_existing = (await db.execute(select(Company).where(Company.recruiter_id == recruiter.id))).scalars().first()
         if not comp_existing:
             company = Company(
                 name="TechCorp Cloud Innovations",
@@ -69,7 +70,7 @@ async def seed_data():
         skills_dict = {}
         skill_names = ["Python", "FastAPI", "PostgreSQL", "Docker", "AWS", "Redis", "Celery", "React", "Next.js", "TypeScript"]
         for s_name in skill_names:
-            s_exist = (await db.execute(select(Skill).where(Skill.name == s_name))).scalar_one_or_none()
+            s_exist = (await db.execute(select(Skill).where(Skill.name == s_name))).scalars().first()
             if not s_exist:
                 sk = Skill(name=s_name)
                 db.add(sk)
@@ -79,7 +80,7 @@ async def seed_data():
                 skills_dict[s_name] = s_exist
 
         # 4. Create Jobs
-        job_1_existing = (await db.execute(select(Job).where(Job.title == "Senior Backend AI Engineer"))).scalar_one_or_none()
+        job_1_existing = (await db.execute(select(Job).where(Job.title == "Senior Backend AI Engineer"))).scalars().first()
         if not job_1_existing:
             job_1 = Job(
                 company_id=company.id,
@@ -98,7 +99,7 @@ async def seed_data():
         else:
             job_1 = job_1_existing
 
-        job_2_existing = (await db.execute(select(Job).where(Job.title == "Full Stack Platform Lead"))).scalar_one_or_none()
+        job_2_existing = (await db.execute(select(Job).where(Job.title == "Full Stack Platform Lead"))).scalars().first()
         if not job_2_existing:
             job_2 = Job(
                 company_id=company.id,
@@ -119,7 +120,7 @@ async def seed_data():
 
         # 5. Create Applications & AI Match Scores
         cand_1 = users["candidate@gmail.com"]
-        app_1_exist = (await db.execute(select(Application).where(Application.candidate_id == cand_1.id, Application.job_id == job_1.id))).scalar_one_or_none()
+        app_1_exist = (await db.execute(select(Application).where(Application.candidate_id == cand_1.id, Application.job_id == job_1.id))).scalars().first()
         if not app_1_exist:
             app_1 = Application(
                 candidate_id=cand_1.id,
@@ -158,7 +159,7 @@ async def seed_data():
                     type="status_updated",
                     title="Application Shortlisted!",
                     message="Congratulations! Your application for 'Senior Backend AI Engineer' has been shortlisted.",
-                    data={"application_id": str(app_1.id)},
+                    data=json.dumps({"application_id": str(app_1.id)}),
                 )
             )
             db.add(
@@ -167,7 +168,7 @@ async def seed_data():
                     type="application_received",
                     title="New Ranked Application",
                     message="Anand Kumar scored 89.5% (Strong Match) for 'Senior Backend AI Engineer'.",
-                    data={"application_id": str(app_1.id)},
+                    data=json.dumps({"application_id": str(app_1.id)}),
                 )
             )
 
@@ -182,3 +183,4 @@ async def seed_data():
 
 if __name__ == "__main__":
     asyncio.run(seed_data())
+
