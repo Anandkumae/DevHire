@@ -138,3 +138,4 @@ Total Automated Tests: **30 Passing**
 | **AI Matching** | `app/tests/test_ai_matching.py` | 5 | NLP text/skills, TF-IDF cosine, ranking, Celery |
 | **Models** | `app/tests/test_models.py` | 9 | Unit initialization and repr for all 9 models |
 | **Health** | `app/tests/test_main.py` | 2 | API root `/`, liveness `/health`, ready `/ready` |
+

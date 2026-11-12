@@ -107,7 +107,7 @@ class ApiService {
   }
 
   async getMe() {
-    return this.request<User>("/protected/me");
+    return this.request<User>("/users/me");
   }
 
   // --- Companies APIs ---

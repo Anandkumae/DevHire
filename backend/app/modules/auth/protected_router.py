@@ -3,9 +3,11 @@ from app.models import User
 from app.modules.auth.dependencies import get_current_user, require_roles
 
 router = APIRouter(prefix="/users", tags=["Users"])
+protected_router = APIRouter(prefix="/protected", tags=["Protected"])
 
 
 @router.get("/me", summary="Get current user profile")
+@protected_router.get("/me", summary="Get current user profile (alias)")
 async def get_profile(user: User = Depends(get_current_user)):
     """Return profile details for the authenticated user."""
     return {
