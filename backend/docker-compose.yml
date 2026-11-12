@@ -1,5 +1,5 @@
 services:
-  postgres:
+  db:
     image: postgres:16
     container_name: devhire_postgres
     restart: unless-stopped
