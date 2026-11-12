@@ -65,7 +65,7 @@ jobs:
         run: |
           alembic upgrade head
 
-      - name: Execute Pytest Suite (40 Automated Tests)
+      - name: Execute Pytest Suite (46 Automated Tests)
         working-directory: ./backend
         env:
           DATABASE_URL: "postgresql+asyncpg://devhire_user:devhire_local_password@localhost:5432/devhire_db"

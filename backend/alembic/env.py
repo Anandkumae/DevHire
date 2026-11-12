@@ -25,7 +25,8 @@ from app.models import (
     Resume,
     Interview,
     InterviewFeedback,
-    Notification
+    Notification,
+    ApplicationMatchScore
 )  # Ensures all models are registered with Base.metadata
 
 config = context.config
