@@ -25,23 +25,13 @@ class DevHirePublicUser(HttpUser):
 
 class CandidateUser(HttpUser):
     """Simulates authenticated candidate behavior: searching, applying, tracking status."""
-    wait_time = between(2, 5)
+    wait_time = between(1, 3)
 
     def on_start(self):
-        """Register and log in as candidate."""
-        self.email = f"load_cand_{uuid.uuid4().hex[:8]}@example.com"
-        self.password = "LoadTestPass123!"
+        """Log in as candidate using pre-seeded credentials."""
+        self.email = "candidate@gmail.com"
+        self.password = "Password123!"
 
-        # Register
-        self.client.post(
-            "/api/v1/auth/register",
-            json={
-                "full_name": "Load Test Candidate",
-                "email": self.email,
-                "password": self.password
-            }
-        )
-        # Login
         res = self.client.post(
             "/api/v1/auth/login",
             json={"email": self.email, "password": self.password}
@@ -67,20 +57,12 @@ class CandidateUser(HttpUser):
 
 class RecruiterUser(HttpUser):
     """Simulates recruiter behavior: managing jobs, ranking candidates by AI match score."""
-    wait_time = between(3, 7)
+    wait_time = between(1, 3)
 
     def on_start(self):
-        self.email = f"load_recruiter_{uuid.uuid4().hex[:8]}@example.com"
-        self.password = "LoadTestPass123!"
+        self.email = "recruiter@techcorp.com"
+        self.password = "Password123!"
 
-        self.client.post(
-            "/api/v1/auth/register",
-            json={
-                "full_name": "Load Test Recruiter",
-                "email": self.email,
-                "password": self.password
-            }
-        )
         res = self.client.post(
             "/api/v1/auth/login",
             json={"email": self.email, "password": self.password}

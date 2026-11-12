@@ -29,6 +29,7 @@ build/
 # Testing
 .coverage
 htmlcov/
+backend/load_tests/*.csv
 
 # Local backups and uploads
 backend/backups/

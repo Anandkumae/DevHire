@@ -1,8 +1,10 @@
 from decimal import Decimal
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import get_cache, invalidate_cache_pattern, set_cache
 from app.database.session import get_db
 from app.models import User
 from app.modules.auth.dependencies import require_roles
@@ -33,7 +35,9 @@ async def create_new_job(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_roles("recruiter", "admin"))
 ):
-    return await create_job(db, data, current_user)
+    job = await create_job(db, data, current_user)
+    await invalidate_cache_pattern("jobs:list:*")
+    return job
 
 
 @router.get(
@@ -53,7 +57,12 @@ async def browse_jobs(
     offset: int = Query(0, ge=0, description="Offset items"),
     db: AsyncSession = Depends(get_db)
 ):
-    return await list_jobs(
+    cache_key = f"jobs:list:{search}:{location}:{employment_type}:{experience_level}:{min_salary}:{max_salary}:{limit}:{offset}"
+    cached_data = await get_cache(cache_key)
+    if cached_data is not None:
+        return JSONResponse(content=cached_data, headers={"X-Cache": "HIT"})
+
+    jobs = await list_jobs(
         db=db,
         search=search,
         location=location,
@@ -64,6 +73,9 @@ async def browse_jobs(
         limit=limit,
         offset=offset
     )
+    serialized = [JobResponse.model_validate(j).model_dump(mode="json") for j in jobs]
+    await set_cache(cache_key, serialized, ttl_seconds=60)
+    return JSONResponse(content=serialized, headers={"X-Cache": "MISS"})
 
 
 @router.get(
@@ -91,7 +103,9 @@ async def update_existing_job(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_roles("recruiter", "admin"))
 ):
-    return await update_job(db, job_id, data, current_user)
+    job = await update_job(db, job_id, data, current_user)
+    await invalidate_cache_pattern("jobs:list:*")
+    return job
 
 
 @router.patch(
@@ -105,7 +119,9 @@ async def close_existing_job(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_roles("recruiter", "admin"))
 ):
-    return await close_job(db, job_id, current_user)
+    job = await close_job(db, job_id, current_user)
+    await invalidate_cache_pattern("jobs:list:*")
+    return job
 
 
 @router.delete(
@@ -118,4 +134,6 @@ async def delete_existing_job(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_roles("recruiter", "admin"))
 ):
-    return await delete_job(db, job_id, current_user)
+    result = await delete_job(db, job_id, current_user)
+    await invalidate_cache_pattern("jobs:list:*")
+    return result

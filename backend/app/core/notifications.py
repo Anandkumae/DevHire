@@ -26,6 +26,9 @@ class ConnectionManager:
             )
         return self._redis
 
+    def get_active_connection_count(self) -> int:
+        return sum(len(socks) for socks in self._active_connections.values())
+
     async def connect(self, user_id: str, websocket: WebSocket) -> None:
         await websocket.accept()
         async with self._lock:
