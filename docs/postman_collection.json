@@ -1,0 +1,206 @@
+{
+  "info": {
+    "name": "DevHire Enterprise ATS API",
+    "_postman_id": "c1f7b889-8d82-4114-8f4b-devhire2026",
+    "description": "Production API Collection for DevHire Applicant Tracking System with Authentication, AI Matching, Jobs, Applications, Interviews, Notifications, and Admin Moderation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register Candidate",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"candidate@gmail.com\",\n  \"password\": \"Password123!\",\n  \"full_name\": \"Anand Kumar\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"]}
+          }
+        },
+        {
+          "name": "Login (Candidate / Recruiter)",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"candidate@gmail.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"]}
+          }
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base_url}}/users/me", "host": ["{{base_url}}"], "path": ["users", "me"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Jobs & Companies",
+      "item": [
+        {
+          "name": "Create Company (Recruiter)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Google Cloud Ecosystem\",\n  \"description\": \"Distributed systems and enterprise infrastructure\",\n  \"website\": \"https://cloud.google.com\",\n  \"location\": \"Bengaluru\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/companies", "host": ["{{base_url}}"], "path": ["companies"]}
+          }
+        },
+        {
+          "name": "Post Job Requisition",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Senior Distributed Backend Engineer\",\n  \"description\": \"Looking for seasoned engineers with Python, FastAPI, PostgreSQL, Redis, and Celery expertise.\",\n  \"location\": \"Remote\",\n  \"employment_type\": \"full_time\",\n  \"experience_level\": \"senior\",\n  \"salary_min\": 2800000,\n  \"salary_max\": 4500000,\n  \"status\": \"published\",\n  \"skills\": [\"Python\", \"FastAPI\", \"PostgreSQL\", \"Redis\", \"Celery\"]\n}"
+            },
+            "url": {"raw": "{{base_url}}/jobs", "host": ["{{base_url}}"], "path": ["jobs"]}
+          }
+        },
+        {
+          "name": "Browse Jobs (Redis-Cached with Query Filters)",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{base_url}}/jobs?search=python&limit=10", "host": ["{{base_url}}"], "path": ["jobs"], "query": [{"key": "search", "value": "python"}, {"key": "limit", "value": "10"}]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Applications & AI Matching",
+      "item": [
+        {
+          "name": "Submit Job Application",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"job_id\": \"<JOB_UUID>\",\n  \"cover_letter\": \"I have deep expertise building distributed Python and FastAPI microservices with PostgreSQL connection pooling and Redis caching.\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/applications", "host": ["{{base_url}}"], "path": ["applications"]}
+          }
+        },
+        {
+          "name": "Get Ranked Candidates for Job (AI Score)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base_url}}/jobs/<JOB_UUID>/ranked-candidates", "host": ["{{base_url}}"], "path": ["jobs", "<JOB_UUID>", "ranked-candidates"]}
+          }
+        },
+        {
+          "name": "Get Explainable Match Breakdown",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base_url}}/applications/<APPLICATION_UUID>/match-score", "host": ["{{base_url}}"], "path": ["applications", "<APPLICATION_UUID>", "match-score"]}
+          }
+        },
+        {
+          "name": "Transition Application Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"under_review\",\n  \"note\": \"Initial resume match and screening approved.\"\n}"
+            },
+            "url": {"raw": "{{base_url}}/applications/<APPLICATION_UUID>/status", "host": ["{{base_url}}"], "path": ["applications", "<APPLICATION_UUID>", "status"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Observability & Telemetry",
+      "item": [
+        {
+          "name": "Liveness Probe",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "http://localhost:8000/health/live", "host": ["http://localhost:8000"], "path": ["health", "live"]}
+          }
+        },
+        {
+          "name": "Readiness Probe (DB + Redis)",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "http://localhost:8000/health/ready", "host": ["http://localhost:8000"], "path": ["health", "ready"]}
+          }
+        },
+        {
+          "name": "Prometheus Plaintext Metrics",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "http://localhost:8000/metrics", "host": ["http://localhost:8000"], "path": ["metrics"]}
+          }
+        },
+        {
+          "name": "Metrics Telemetry JSON Summary",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "http://localhost:8000/metrics/summary", "host": ["http://localhost:8000"], "path": ["metrics", "summary"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Admin Moderation",
+      "item": [
+        {
+          "name": "Platform Statistics",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base_url}}/admin/stats", "host": ["{{base_url}}"], "path": ["admin", "stats"]}
+          }
+        },
+        {
+          "name": "List Users for Moderation",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {"raw": "{{base_url}}/admin/users?limit=20", "host": ["{{base_url}}"], "path": ["admin", "users"], "query": [{"key": "limit", "value": "20"}]}
+          }
+        }
+      ]
+    }
+  ]
+}
