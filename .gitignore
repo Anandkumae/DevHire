@@ -30,6 +30,12 @@ build/
 .coverage
 htmlcov/
 
+# Local backups and uploads
+backend/backups/
+backend/uploads/
+*.dump
+
+
 # OS
 .DS_Store
 Thumbs.db

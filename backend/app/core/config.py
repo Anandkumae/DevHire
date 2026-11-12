@@ -1,4 +1,5 @@
 from pathlib import Path
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -32,6 +33,15 @@ class Settings(BaseSettings):
     RESUME_MAX_FILE_SIZE_BYTES: int = 5 * 1024 * 1024  # 5 MB
     RESUME_ALLOWED_CONTENT_TYPES: list[str] = ["application/pdf"]
     LOCAL_STORAGE_DIR: str = str(BASE_DIR / "uploads" / "resumes")
+
+    @model_validator(mode="after")
+    def validate_production_settings(self):
+        if self.ENVIRONMENT == "production":
+            if self.SECRET_KEY in ["insecure_dev_secret_key_change_me", "devhire_docker_secret_key_change_in_prod", ""]:
+                raise ValueError("In production, SECRET_KEY must be a secure randomly generated key and cannot use the development default.")
+            if self.DEBUG is True:
+                raise ValueError("DEBUG must be set to False in production.")
+        return self
 
     model_config = SettingsConfigDict(
         env_file=ENV_PATH,

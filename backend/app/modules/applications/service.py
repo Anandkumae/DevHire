@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 
 from app.core.storage import storage_service
+from app.core.security_middleware import sanitize_input
 from app.models import Application, ApplicationStatusHistory, Company, Job, Resume, User
 from app.modules.applications.schemas import ApplicationCreate, ApplicationStatusUpdate
 
@@ -67,10 +68,11 @@ async def apply_to_job(
             effective_resume_url = storage_service.generate_presigned_download_url(resume_obj.s3_key)
 
     # 4. Create application and initial audit log atomically
+    clean_cover_letter = sanitize_input(data.cover_letter)
     application = Application(
         candidate_id=current_user.id,
         job_id=data.job_id,
-        cover_letter=data.cover_letter,
+        cover_letter=clean_cover_letter,
         resume_url=effective_resume_url,
         status="applied"
     )
@@ -282,12 +284,13 @@ async def update_application_status(
     old_status = app.status
     app.status = data.status
 
+    clean_notes = sanitize_input(data.notes)
     history = ApplicationStatusHistory(
         application_id=app.id,
         from_status=old_status,
         to_status=data.status,
         changed_by_user_id=current_user.id,
-        notes=data.notes
+        notes=clean_notes
     )
     db.add(history)
     await db.commit()

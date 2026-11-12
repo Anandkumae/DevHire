@@ -1,10 +1,13 @@
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 import sentry_sdk
 
 from app.core.config import settings
+from app.core.limiter import limiter, rate_limit_exceeded_handler
+from app.core.security_middleware import SecurityHeadersMiddleware
 from app.database.session import get_db
 from app.modules.auth.protected_router import router as users_router, protected_router
 from app.modules.auth.router import router as auth_router
@@ -27,6 +30,11 @@ app = FastAPI(
     title=settings.APP_NAME,
     version="1.0.0"
 )
+
+# Production Security & Rate Limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # CORS Configuration for Frontend Integration
 app.add_middleware(

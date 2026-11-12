@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.limiter import limiter
 from app.database.session import get_db
 from app.modules.auth.schemas import (
     RefreshRequest,
@@ -24,7 +25,9 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     status_code=status.HTTP_201_CREATED,
     summary="Register a new candidate"
 )
+@limiter.limit("10/minute")
 async def register(
+    request: Request,
     data: UserRegister,
     db: AsyncSession = Depends(get_db)
 ):
@@ -47,7 +50,9 @@ async def register(
     status_code=status.HTTP_200_OK,
     summary="Authenticate user and obtain JWT tokens"
 )
+@limiter.limit("15/minute")
 async def login(
+    request: Request,
     data: UserLogin,
     db: AsyncSession = Depends(get_db)
 ):
