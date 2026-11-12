@@ -1,12 +1,15 @@
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 import sentry_sdk
 
+from app.core.cache import get_redis_client
 from app.core.config import settings
 from app.core.limiter import limiter, rate_limit_exceeded_handler
+from app.core.logging_middleware import StructuredLoggingMiddleware
+from app.core.metrics import get_metrics_summary, get_prometheus_formatted_metrics
 from app.core.security_middleware import SecurityHeadersMiddleware
 from app.database.session import get_db
 from app.modules.auth.protected_router import router as users_router, protected_router
@@ -31,10 +34,11 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Production Security & Rate Limiting
+# Production Security, Telemetry & Rate Limiting
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(StructuredLoggingMiddleware)
 
 # CORS Configuration for Frontend Integration
 app.add_middleware(
@@ -68,6 +72,7 @@ async def home():
 
 
 @app.get("/health", summary="Liveness Probe")
+@app.get("/health/live", summary="Liveness Probe")
 async def health():
     return {
         "status": "healthy"
@@ -75,19 +80,51 @@ async def health():
 
 
 @app.get("/ready", summary="Readiness Probe")
+@app.get("/health/ready", summary="Readiness Probe")
 async def readiness_check(db: AsyncSession = Depends(get_db)):
+    db_ok = False
+    redis_ok = False
+    errors = {}
+
     try:
         await db.execute(text("SELECT 1"))
+        db_ok = True
+    except Exception as e:
+        errors["database"] = str(e)
+
+    try:
+        r = get_redis_client()
+        await r.ping()
+        redis_ok = True
+    except Exception as e:
+        errors["redis"] = str(e)
+
+    if db_ok and redis_ok:
         return {
             "status": "ready",
-            "database": "connected"
+            "database": "connected",
+            "redis": "connected"
         }
-    except Exception as e:
+    else:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail={
                 "status": "not ready",
-                "database": "disconnected",
-                "error": str(e)
+                "database": "connected" if db_ok else "disconnected",
+                "redis": "connected" if redis_ok else "disconnected",
+                "errors": errors
             }
         )
+
+
+@app.get("/metrics", summary="Prometheus Metrics")
+async def prometheus_metrics():
+    """Plain-text Prometheus metrics scrape endpoint."""
+    content = await get_prometheus_formatted_metrics()
+    return Response(content=content, media_type="text/plain")
+
+
+@app.get("/metrics/summary", summary="System Observability Telemetry")
+async def metrics_summary():
+    """Structured JSON telemetry endpoint for CloudWatch, dashboards, and admin monitoring."""
+    return await get_metrics_summary()
