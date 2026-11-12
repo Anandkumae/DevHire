@@ -66,3 +66,4 @@ Endpoint Breakdown:
 ### 3.4 Concurrency & Resilience
 - **Database Connection Pooling**: Stress-tested with 25 concurrent async queries executed simultaneously via `asyncio.gather`. All 25 queries succeeded with zero connection leaks or pool timeout errors.
 - **WebSocket Active Session Tracking**: Successfully tracked concurrent candidate and recruiter WebSocket sessions with live ping/pong heartbeat and instant message delivery.
+

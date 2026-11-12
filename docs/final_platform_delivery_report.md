@@ -106,3 +106,4 @@ cd D:\DevHire\backend
 - **Candidate 1**: `candidate@gmail.com` | `Password123!`
 - **Candidate 2**: `priya.sharma@gmail.com` | `Password123!`
 - **Administrator**: `admin@devhire.com` | `Password123!`
+

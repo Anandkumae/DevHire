@@ -2,49 +2,34 @@ name: DevHire CI/CD Pipeline
 
 on:
   push:
-    branches: [main, staging]
-    tags:
-      - 'v*.*.*'
+    branches: [main]
   pull_request:
-    branches: [main, staging]
+    branches: [main]
 
 permissions:
   contents: read
-  packages: write
 
 jobs:
   backend-test:
     name: Backend Pytest Suite & DB Migrations
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: devhire_user
-          POSTGRES_PASSWORD: devhire_local_password
-          POSTGRES_DB: devhire_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Stop host PostgreSQL service (prevent port 5432 collision)
+        run: |
+          sudo systemctl stop postgresql || true
+          sudo systemctl disable postgresql || true
+
+      - name: Spin Up PostgreSQL and Redis via Docker Compose
+        run: |
+          docker compose up -d db redis
+          echo "Waiting for PostgreSQL to be healthy..."
+          docker compose exec -T db sh -c 'until pg_isready -U devhire_user -d devhire_db; do sleep 1; done'
+          echo "Waiting for Redis to be healthy..."
+          docker compose exec -T redis redis-cli ping
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -57,21 +42,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
-      - name: Verify Database Migrations Up-to-Date
+      - name: Run Database Migrations
         working-directory: ./backend
         env:
-          DATABASE_URL: "postgresql+asyncpg://devhire_user:devhire_local_password@localhost:5432/devhire_db"
-          REDIS_URL: "redis://localhost:6379/0"
+          DATABASE_URL: "postgresql+asyncpg://devhire_user:devhire_local_password@127.0.0.1:5432/devhire_db"
+          REDIS_URL: "redis://127.0.0.1:6379/0"
         run: |
           alembic upgrade head
 
-      - name: Execute Pytest Suite (46 Automated Tests)
+      - name: Execute Full Pytest Suite (46 Tests)
         working-directory: ./backend
         env:
-          DATABASE_URL: "postgresql+asyncpg://devhire_user:devhire_local_password@localhost:5432/devhire_db"
-          REDIS_URL: "redis://localhost:6379/0"
-          CELERY_BROKER_URL: "redis://localhost:6379/0"
-          CELERY_RESULT_BACKEND: "redis://localhost:6379/1"
+          DATABASE_URL: "postgresql+asyncpg://devhire_user:devhire_local_password@127.0.0.1:5432/devhire_db"
+          REDIS_URL: "redis://127.0.0.1:6379/0"
+          CELERY_BROKER_URL: "redis://127.0.0.1:6379/0"
+          CELERY_RESULT_BACKEND: "redis://127.0.0.1:6379/1"
           SECRET_KEY: "ci_pipeline_secure_test_key_for_devhire"
         run: |
           python -m pytest app/tests -v -p no:locust --durations=10
@@ -88,12 +73,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Frontend Dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm install
 
       - name: Build Next.js Production Bundle
         working-directory: ./frontend
@@ -102,10 +85,10 @@ jobs:
         run: npm run build
 
   docker-build:
-    name: Build & Version Docker Images
+    name: Build Docker Images
     needs: [backend-test, frontend-build]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout Repository
@@ -125,32 +108,3 @@ jobs:
             devhire-api:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  deploy-staging:
-    name: Deploy to Staging Environment
-    needs: docker-build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    environment:
-      name: staging
-      url: https://staging.devhire.app
-    steps:
-      - name: Deploy Staging Workloads
-        run: |
-          echo "Deploying release ${{ github.sha }} to DevHire Staging..."
-          echo "Health check target: https://staging-api.devhire.app/health/ready"
-
-  deploy-production:
-    name: Deploy to Production Environment
-    needs: docker-build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
-    environment:
-      name: production
-      url: https://devhire.app
-    steps:
-      - name: Deploy Production Workloads (Blue/Green)
-        run: |
-          echo "Initiating Blue/Green Zero-Downtime Deployment for ${{ github.ref_name }}..."
-          echo "Running database schema migrations..."
-          echo "Swapping ALB target groups upon healthy readiness probe response..."

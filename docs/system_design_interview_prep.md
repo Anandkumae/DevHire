@@ -59,3 +59,4 @@ This guide prepares software engineers to discuss the architecture, engineering 
 > 2. **Phase 2 (Dual-Write / Read)**: Deploy application code that reads/writes the new structure while maintaining compatibility.
 > 3. **Phase 3 (Contract)**: Safely deprecate old columns once all traffic is on the new release.
 > Our automated rollback script (`scripts/rollback_deployment.py`) integrates with `/health/ready` to verify database and Redis connectivity before cutover."
+
