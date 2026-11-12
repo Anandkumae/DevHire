@@ -62,3 +62,4 @@ async def test_metrics_json_summary():
         assert "cache" in data
         assert "realtime" in data
         assert data["dependencies"]["redis_connected"] is True
+

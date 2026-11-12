@@ -61,3 +61,4 @@ Every pull request and merge to `main` executes `.github/workflows/ci-cd.yml`:
 2. **Frontend Build**: Installs dependencies and runs `next build` with TypeScript verification.
 3. **Docker Build**: Builds and tags versioned images with `${{ github.sha }}`.
 4. **Staging / Production Deployment**: Automates deployment gates with environment protection rules.
+

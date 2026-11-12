@@ -21,6 +21,7 @@ from app.modules.resumes.router import router as resumes_router
 from app.modules.interviews.router import router as interviews_router
 from app.modules.notifications.router import router as notifications_router
 from app.modules.ai_matching.router import router as ai_matching_router
+from app.modules.admin.router import router as admin_router
 
 if settings.SENTRY_DSN:
     sentry_sdk.init(
@@ -61,6 +62,7 @@ app.include_router(resumes_router, prefix="/api/v1")
 app.include_router(interviews_router, prefix="/api/v1")
 app.include_router(notifications_router, prefix="/api/v1")
 app.include_router(ai_matching_router, prefix="/api/v1")
+app.include_router(admin_router, prefix="/api/v1")
 
 
 @app.get("/", summary="API Root")

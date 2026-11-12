@@ -95,3 +95,4 @@ async def get_prometheus_formatted_metrics() -> str:
         f"devhire_redis_cache_hit_ratio {summary['cache'].get('hit_ratio_percent', 0.0)}",
     ]
     return "\n".join(lines) + "\n"
+

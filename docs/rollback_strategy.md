@@ -42,3 +42,4 @@ python scripts/rollback_deployment.py --restore-backup backups/devhire_db_backup
 ## 3. Disaster Recovery RTO and RPO Targets
 - **Recovery Point Objective (RPO)**: $\le 1$ hour (hourly PostgreSQL logical and WAL streaming backups).
 - **Recovery Time Objective (RTO)**: $\le 5$ minutes (automated script recovery and container restart).
+
