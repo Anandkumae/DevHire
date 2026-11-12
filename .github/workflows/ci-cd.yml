@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: devhire-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend-test:
     name: Backend Pytest Suite & DB Migrations
@@ -23,20 +27,18 @@ jobs:
         run: |
           sudo systemctl stop postgresql || true
           sudo systemctl disable postgresql || true
+          sudo fuser -k 5432/tcp || true
+          sudo fuser -k 6379/tcp || true
 
       - name: Spin Up PostgreSQL and Redis via Docker Compose
         run: |
-          docker compose up -d db redis
-          echo "Polling PostgreSQL readiness..."
-          for i in {1..30}; do
-            if docker compose exec -T db pg_isready -U devhire_user -d devhire_db; then
-              echo "PostgreSQL is ready!"
-              break
-            fi
-            echo "Waiting for PostgreSQL ($i)..."
-            sleep 1
-          done
-          echo "Checking Redis connectivity..."
+          docker compose up -d --wait db redis || {
+            echo "Docker compose --wait failed. Outputting service logs:"
+            docker compose logs
+            exit 1
+          }
+          docker compose ps
+          docker compose exec -T db pg_isready -U devhire_user -d devhire_db
           docker compose exec -T redis redis-cli ping
 
       - name: Set up Python 3.12
@@ -56,7 +58,7 @@ jobs:
           DATABASE_URL: "postgresql+asyncpg://devhire_user:devhire_local_password@127.0.0.1:5432/devhire_db"
           REDIS_URL: "redis://127.0.0.1:6379/0"
         run: |
-          alembic upgrade head
+          python -m alembic upgrade head
 
       - name: Execute Full Pytest Suite (46 Tests)
         working-directory: ./backend
@@ -81,6 +83,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Frontend Dependencies
         working-directory: ./frontend
