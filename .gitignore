@@ -36,6 +36,9 @@ backend/backups/
 backend/uploads/
 *.dump
 
+# Private interview prep and project insights
+PROJECT_INSIGHTS_AND_INTERVIEW_GUIDE.md
+
 
 # OS
 .DS_Store
